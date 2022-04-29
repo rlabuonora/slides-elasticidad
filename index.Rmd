@@ -285,11 +285,13 @@ ggplot() +
 ![](imgs/equilibrio_excedentes.png)
 ---
 ![](imgs/equilibrio_excedentes.png)
+
 ---
 ![](imgs/sobreproduccion.png)
 
 ---
 ![](imgs/subproduccion.png)
+
 ---
 # Efecto de un impuesto
 

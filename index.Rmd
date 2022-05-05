@@ -274,6 +274,8 @@ ggplot() +
 ---
 # La demanda y la disposición a pagar
 
+ La curva de demanda me dice cuantas unidades de un bien compraría a determinado precio.
+
 ---
 
 ![](imgs/demanda_individual_mercado.png)
@@ -326,49 +328,30 @@ ggplot() +
 ---
 # Aplicación a controles de precios
 
-El gobierno impone un precio mínimo de $4
+
+.pull-left[
+
 
 ```{r}
 
 library(tidyverse)
 library(patchwork)
 
-df <- tribble(
-  ~x, ~y, ~curva,
-  0,   1,  "oferta",
-  12,   13, "oferta",
-  0,   12,   "demanda",
-  7, 0,    "demanda"
+dem <- tibble(
+  q=c(0, 600),
+  p=c(1200, 0)
 )
 
-# https://pressbooks.bccampus.ca/uvicecon103/chapter/4-6-price-controls/
-
-df <- tribble(
-  ~x, ~y, ~curva,
-  0,   0,  "oferta",
-  600,   1200, "oferta",
-  0,   1200,   "demanda",
-  600, 0,    "demanda"
+of <- tibble(
+  q=c(0, 600),
+  p=c(0, 1200)
 )
 
-base <- ggplot(df, aes(x, y)) + 
-    geom_line(data = df, aes(color=curva)) + 
-    geom_line(data = df, aes(color=curva)) + 
-    scale_color_brewer(name = NULL,
-                       palette = "Accent",
-                       labels = c("Demanda", "Oferta")) +
-    scale_x_continuous(expand = c(0, 40),
-                       breaks=seq(0, 600, 100))  +
-    scale_y_continuous(expand = c(0, 40),
-                       breaks=seq(0, 1200, 100)) + 
-    geom_segment(aes(x = 0, y = 0, xend = 0, yend = 1300),     arrow = arrow(length=unit(0.2, "cm"))) +
-    geom_segment(aes(x=0, y=0, xend = 700, yend = 0), arrow = arrow(length=unit(0.2, "cm"))) + 
-    theme(axis.title.y = 
-            element_text(angle = 0),
-          axis.title.x = 
-            element_text(hjust=0.95, vjust=6))  +
-    labs(x="X", y="P")
+of_p <- poly.calc(of$q, of$p) %>% 
+  as.function()
 
+dem_p <- poly.calc(dem$q, dem$p) %>% 
+  as.function
 
 
 
@@ -382,38 +365,31 @@ areas <- tribble(
   "Ex. Prod.", 300, 600
 )
 
-antes <- base +
+antes <- ggplot() + 
+    scale_x_continuous(expand = c(0, 40),
+                       breaks=seq(0, 600, 200))  +
+    scale_y_continuous(expand = c(0, 200),
+                       breaks=seq(0, 1200, 200))  +
+    labs(x="Q", y="P") +
   geom_polygon(data=areas, aes(group=id, x=x, y=y, fill = id)) +
+    geom_function(fun=of_p, xlim=c(0, 550)) + 
+    geom_function(fun=dem_p, xlim=c(0, 550)) + 
+   # Eje Y
+  geom_segment(aes(x=0, y=0, xend=0, yend=Inf), size=.5, arrow=arrow(length = unit(.2, "cm"))) + 
+  # Eje X
+  geom_segment(aes(x=0, y=0, xend=Inf, yend=0), size=.5, arrow=arrow(length=unit(.2, "cm"))) +
   scale_fill_brewer(name= "", palette = "Accent") +
   guides(color = guide_legend(order = 1), 
          fill = guide_legend(order = 2)) +
-  labs(title="Sin control de Precios")
+  theme(legend.position = "bottom" )
 
-areas <- tribble(
-  ~id, ~x, ~y,
-  "Ex. Cons.", 0, 400,
-  "Ex. Cons.", 0, 1200,
-  "Ex. Cons.", 200, 800,
-  "Ex. Cons.", 200, 400,
-  "Ex. Prod.", 0,   0,
-  "Ex. Prod.", 0, 400,
-  "Ex. Prod.", 200, 400,
-  "Perdida", 200, 400,
-  "Perdida", 200, 800,
-  "Perdida", 300, 600
-)
-
-despues <- base +
-  geom_segment(x=0, y=400, xend = Inf, yend=400) +
-  geom_polygon(data=areas, aes(group=id, x=x, y=y, fill = id)) +
-  scale_fill_brewer(palette = "Accent", name= "") +
-  labs(title="Con control de precios")
 
 antes
 ```
+]
 
----
-# Antes del control
+.pull-right[
+
 
 
 |       Concepto              | Valor           |
@@ -423,18 +399,53 @@ antes
 | Recaudación                 |   0             | 
 | Total                       |    180000       | 
 
-
+]
 
 ---
 # Controles de precios
+
+.pull-left[
 ```{r}
+
+
+areas_dps <- tribble(
+  ~id, ~x, ~y,
+  "Ex. Cons.", 0, 400,
+  "Ex. Cons.", 0, 1200,
+  "Ex. Cons.", 200, 800,
+  "Ex. Cons.", 200, 400,
+  "Ex. Prod.", 0,   0,
+  "Ex. Prod.", 0, 400,
+  "Ex. Prod.", 200, 400,
+  "Pérdida", 200, 400,
+  "Pérdida", 200, 800,
+  "Pérdida", 300, 600
+)
+
+despues <- ggplot() + 
+    scale_x_continuous(expand = c(0, 40),
+                       breaks=seq(0, 600, 200))  +
+    scale_y_continuous(expand = c(0, 200),
+                       breaks=seq(0, 1200, 200))  +
+    labs(x="imgs/equilibrio_excedentes.png", y="P") +
+  geom_segment(x=0, y=400, xend = Inf, yend=400) +
+  geom_polygon(data=areas_dps, aes(group=id, x=x, y=y, fill = id)) +
+      geom_function(fun=of_p, xlim=c(0, 550)) + 
+    geom_function(fun=dem_p, xlim=c(0, 550)) + 
+   # Eje Y
+  geom_segment(aes(x=0, y=0, xend=0, yend=Inf), size=.5, arrow=arrow(length = unit(.2, "cm"))) + 
+  # Eje X
+  geom_segment(aes(x=0, y=0, xend=Inf, yend=0), size=.5, arrow=arrow(length=unit(.2, "cm"))) +
+  scale_fill_brewer(palette = "Accent", name= "") +
+  theme(legend.position = "bottom" )
+
 despues
 
 ```
+]
 
+.pull-right[
 
----
-# Análisis del bienestar
 
 |            Concepto         | Valor             |
 |-----------------------------|-------------------|
@@ -444,6 +455,7 @@ despues
 
 
 - Pérdida del  bienestar: 20000
+]
 
 ---
 # Efecto de un impuesto
@@ -473,64 +485,78 @@ despues
 
 ---
 
+# Impuesto sobre los consumidores
 
-# Aplicación a impuestos
-
-El gobierno impone un impuesto de $3.
-```{r}
+```{r fig.align='center', out.width='55%'}
 library(tidyverse)
 library(patchwork)
+library(polynom)
 
-df <- tribble(
-  ~x, ~y, ~curva,
-  0,   6,  "demanda",
-  7,   2.5, "demanda",
-  0,   0,   "oferta",
-  6, 6,    "oferta"
+dem <- tibble(
+  q=c(0, 7),
+  p=c(6, 2.5)
 )
 
-
-
-base <- ggplot(df, aes(x, y)) + 
-  geom_line(data = df, aes(color=curva)) + 
-  geom_line(data = df, aes(color=curva)) + 
-  scale_color_brewer(name = "",
-                     palette = "Accent",
-                     labels = c("Demanda", "Oferta")) +
-  scale_x_continuous(expand = c(0, .1),
-                     breaks=seq(0, 8, .5))  +
-  scale_y_continuous(expand = c(0, .1),
-                     breaks=seq(0, 6, .5)) + 
-  geom_segment(aes(x = 0, y = 0, xend = 0, yend = 6.5), arrow = arrow(length=unit(0.2, "cm"))) +
-  geom_segment(aes(x=0, y=0, xend = 7, yend = 0), arrow = arrow(length=unit(0.2, "cm"))) + 
-  theme(axis.title.y = 
-          element_text(angle = 0),
-        axis.title.x = 
-          element_text(hjust=0.95, vjust=6)) + 
-  labs(x="", y="")
-
-
-df_demanda_impuesto <- tribble(
-  ~x, ~y, ~curva,
-  0,  3, "Demanda con impuesto",
-  6, 0, "Demanda con impuesto"
+of <- tibble(
+  q=c(0, 6),
+  p=c(0, 6)
 )
 
-df_oferta_impuesto <- tribble(
-  ~x, ~y, ~curva,
-  0,  3, "Oferta con impuesto",
-  3,  6, "Oferta con impuesto"
-)
+of_p <- poly.calc(of$q, of$p) %>% 
+  as.function()
 
-impuesto_productores <- base +
-  geom_line(data = df_oferta_impuesto, linetype="dashed") +
-  labs(title="Impuesto sobre los productores")
-  
-impuesto_consumidores <- base +
-  geom_line(data = df_demanda_impuesto, linetype="dashed") +
-  labs(title="Impuesto sobre los consumidores")
+of_p_2 <- poly.calc(of$q, of$p+3) %>% 
+  as.function()
+
+dem_p <- poly.calc(dem$q, dem$p) %>% 
+  as.function
+
+dem_p_2 <- poly.calc(dem$q, dem$p-3) %>% 
+  as.function
+
+base <- ggplot() + 
+  geom_function(fun=of_p, xlim=c(1, 6)) + 
+  geom_function(fun=dem_p, xlim=c(1, 6)) 
+
+base  +
+  geom_function(fun=dem_p_2, xlim=c(1, 4), linetype="dashed")+
+  annotate("text", label="S", x = 6.5, y = 6) +
+  annotate("text", label="D2", x = 4.5, y = .75) +
+  annotate("text", label="D1", x = 6.5, y = 3) +
+  labs(x="Q", y="P") +
+  scale_x_continuous(expand = expansion(add=c(.2, 1))) + 
+  scale_y_continuous(expand = expansion(add=c(.2, .9)))  +
+  # Eje Y
+  geom_segment(aes(x=0, y=0, xend=0, yend=Inf), size=.5, arrow=arrow(length = unit(.2, "cm"))) + 
+  # Eje X
+  geom_segment(aes(x=0, y=0, xend=Inf, yend=0), size=.5, arrow=arrow(length=unit(.2, "cm")))
 
 
+```
+
+---
+
+# Impuesto sobre los productores
+```{r fig.align='center', out.width='55%'}
+base + 
+  geom_function(fun=of_p_2, xlim=c(1, 6), linetype="dashed") +
+   scale_x_continuous(expand = expansion(add=c(.2, 1))) + 
+  scale_y_continuous(expand = expansion(add=c(.2, .9)))  +
+  annotate("text", label="S1", x = 6.5, y = 9) +
+  annotate("text", label="S2", x = 6.5, y = 6) +
+  annotate("text", label="D", x = 6.5, y = 2.5) +
+  labs(x="Q", y="P", title="")  +
+  # Eje Y
+  geom_segment(aes(x=0, y=0, xend=0, yend=Inf), size=.5, arrow=arrow(length = unit(.2, "cm"))) + 
+  # Eje X
+  geom_segment(aes(x=0, y=0, xend=Inf, yend=0), size=.5, arrow=arrow(length=unit(.2, "cm")))
+
+```
+
+
+---
+
+```{r fig.align='center', out.width='75%'}
 area <- tribble(
   ~id, ~x, ~y,
   "Exc. Cons.", 0, 6,
@@ -550,45 +576,35 @@ area <- tribble(
 
 bienestar_con_impuesto <- base +
   geom_polygon(data=area, aes(x, y, group=id, fill=id), alpha = .6) +
-  scale_fill_brewer(palette = "Accent", name = "")
-
-impuesto_consumidores
+  scale_fill_brewer(palette = "Accent", name = "") +
+  # Eje Y
+  geom_segment(aes(x=0, y=0, xend=0, yend=Inf), size=1, alpha=.6) + 
+  # Eje X
+  geom_segment(aes(x=-Inf, y=0, xend=Inf, yend=0), size=1, alpha=.6)
 ```
-
----
-# Impuestos
-```{r}
-impuesto_productores
-```
-
 
 ---
 # Bienestar antes del impuesto
 
 |       Concepto              |  Valor          |
 |-----------------------------|-----------------|
-| Excedente del Productor     |         8       |
-| Excedente del Consumidor    |         4       |
-| Recaudación                 |         0       | 
-| Total                       |         12      |
+| Excedente del Productor     |         $8       |
+| Excedente del Consumidor    |         $4       |
+| Recaudación                 |         $0       | 
+| Total                       |         $12      |
+
 
 ---
-# Bienestar
-```{r}
-bienestar_con_impuesto
-```
-
----
-# Cálculo
+# Bienestar después del impuesto
 
 |    Concepto               |  Valor        |
 |---------------------------|---------------|
-| Excedente del Productor   |     2         |
-| Excedente del Consumidor  |     1         |
-| Recaudación               |     6         | 
-| Total                     |     9         |
+| Excedente del Productor   |     $2         |
+| Excedente del Consumidor  |     $1         |
+| Recaudación               |     $6         | 
+| Total                     |     $9         |
 
-Pérdida: 4
+Hay una pérdida de bienestar de  $3.
 
 
 ---
@@ -596,6 +612,7 @@ Pérdida: 4
 # Conclusiones
 
 - El equilibrio de mercado es el mismo independientemente de si el impuesto es sobre los consumidores o los productores.
+
 - La incidencia económica del impuesto no depende de quién lo paga según la ley, sino de las elasticidades de la oferta y la demanda.
 
 
@@ -607,7 +624,8 @@ class: center
 
 
 
-<blockquote class="twitter-tweet"><p lang="es" dir="ltr">&quot;En inserción internacional parece que Uruguay está buscando pareja en el baile&quot;, señaló Rosselli. En el último desayuno de trabajo organizado por <a href="https://twitter.com/Exante_UY?ref_src=twsrc%5Etfw">@Exante_UY</a> sobre perspectivas económicas del Uruguay se pleanteó la necesidad de impulsar una agenda ambiciosa de reformas. <a href="https://t.co/Bbd2RagLQ7">pic.twitter.com/Bbd2RagLQ7</a></p>&mdash; Desayunos informales (@desayunos12) <a href="https://twitter.com/desayunos12/status/1521851873959063552?ref_src=twsrc%5Etfw">May 4, 2022</a></blockquote> <script async src="https://platform.twitter.com/widgets.js" charset="utf-8"></script>
+<blockquote class="twitter-tweet">
+<p lang="es" dir="ltr">&quot;En inserción internacional parece que Uruguay está buscando pareja en el baile&quot;, señaló Rosselli. En el último desayuno de trabajo organizado por <a href="https://twitter.com/Exante_UY?ref_src=twsrc%5Etfw">@Exante_UY</a> sobre perspectivas económicas del Uruguay se pleanteó la necesidad de impulsar una agenda ambiciosa de reformas. <a href="https://t.co/Bbd2RagLQ7">pic.twitter.com/Bbd2RagLQ7</a></p>&mdash; Desayunos informales (@desayunos12) <a href="https://twitter.com/desayunos12/status/1521851873959063552?ref_src=twsrc%5Etfw">May 4, 2022</a></blockquote> <script async src="https://platform.twitter.com/widgets.js" charset="utf-8"></script>
 
 
 

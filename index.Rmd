@@ -258,11 +258,17 @@ ggplot() +
 # Mecanismos de asignación de recursos
 
 - Precios
+
 - Control centralizado
+
 - Votación
+
 - Concurso
+
 - Orden de llegada
+
 - Sorteo
+
 - Características personales
 
 ---
@@ -291,6 +297,153 @@ ggplot() +
 
 ---
 ![](imgs/subproduccion.png)
+---
+# El excedente del consumidor
+
+- La curva de demanda representa la disponiblidad a pagar por cierta cantidad demandada.
+
+- El precio de equilibrio se determina en el cruce con la curva de oferta.
+
+- Para las primeras unidades compradas la disponiblidad a pagar es más alta que para las últimas.
+
+- Pero todas las unidades se venden al mismo precio.
+
+- Las unidades anteriores generan mayor satisfacción que el precio que paga el consumidor.
+
+
+---
+
+# Usos
+
+- Se calcula como el área entre el precio y la curva de demanda.
+
+- Si la curva de demanda es lineal, es un triángulo.
+
+- Sirve para calcular el bienestar que los consumidores obtienen por participar en un mercado.
+
+- Sirve para cuantificar los efectos de políticas económicas (impuestos, etc.) o distintos regímenes de competencia.
+
+---
+# Aplicación a controles de precios
+
+El gobierno impone un precio mínimo de $4
+
+```{r}
+
+library(tidyverse)
+library(patchwork)
+
+df <- tribble(
+  ~x, ~y, ~curva,
+  0,   1,  "oferta",
+  12,   13, "oferta",
+  0,   12,   "demanda",
+  7, 0,    "demanda"
+)
+
+# https://pressbooks.bccampus.ca/uvicecon103/chapter/4-6-price-controls/
+
+df <- tribble(
+  ~x, ~y, ~curva,
+  0,   0,  "oferta",
+  600,   1200, "oferta",
+  0,   1200,   "demanda",
+  600, 0,    "demanda"
+)
+
+base <- ggplot(df, aes(x, y)) + 
+    geom_line(data = df, aes(color=curva)) + 
+    geom_line(data = df, aes(color=curva)) + 
+    scale_color_brewer(name = NULL,
+                       palette = "Accent",
+                       labels = c("Demanda", "Oferta")) +
+    scale_x_continuous(expand = c(0, 40),
+                       breaks=seq(0, 600, 100))  +
+    scale_y_continuous(expand = c(0, 40),
+                       breaks=seq(0, 1200, 100)) + 
+    geom_segment(aes(x = 0, y = 0, xend = 0, yend = 1300),     arrow = arrow(length=unit(0.2, "cm"))) +
+    geom_segment(aes(x=0, y=0, xend = 700, yend = 0), arrow = arrow(length=unit(0.2, "cm"))) + 
+    theme(axis.title.y = 
+            element_text(angle = 0),
+          axis.title.x = 
+            element_text(hjust=0.95, vjust=6))  +
+    labs(x="X", y="P")
+
+
+
+
+areas <- tribble(
+  ~id, ~x, ~y,
+  "Ex. Cons.", 0, 600,
+  "Ex. Cons.", 0, 1200,
+  "Ex. Cons.", 300, 600,
+  "Ex. Prod.", 0,   0,
+  "Ex. Prod.", 0, 600,
+  "Ex. Prod.", 300, 600
+)
+
+antes <- base +
+  geom_polygon(data=areas, aes(group=id, x=x, y=y, fill = id)) +
+  scale_fill_brewer(name= "", palette = "Accent") +
+  guides(color = guide_legend(order = 1), 
+         fill = guide_legend(order = 2)) +
+  labs(title="Sin control de Precios")
+
+areas <- tribble(
+  ~id, ~x, ~y,
+  "Ex. Cons.", 0, 400,
+  "Ex. Cons.", 0, 1200,
+  "Ex. Cons.", 200, 800,
+  "Ex. Cons.", 200, 400,
+  "Ex. Prod.", 0,   0,
+  "Ex. Prod.", 0, 400,
+  "Ex. Prod.", 200, 400,
+  "Perdida", 200, 400,
+  "Perdida", 200, 800,
+  "Perdida", 300, 600
+)
+
+despues <- base +
+  geom_segment(x=0, y=400, xend = Inf, yend=400) +
+  geom_polygon(data=areas, aes(group=id, x=x, y=y, fill = id)) +
+  scale_fill_brewer(palette = "Accent", name= "") +
+  labs(title="Con control de precios")
+
+antes
+```
+
+---
+# Antes del control
+
+
+|       Concepto              | Valor           |
+|-----------------------------|-----------------|
+| Excedente del Productor     |   90000         |
+| Excedente del Consumidor    |   90000         |
+| Recaudación                 |   0             | 
+| Total                       |    180000       | 
+
+
+
+---
+# Controles de precios
+```{r}
+despues
+
+```
+
+
+---
+# Análisis del bienestar
+
+|            Concepto         | Valor             |
+|-----------------------------|-------------------|
+| Excedente del Productor     |     40000         |
+| Excedente del Consumidor    | 800 + 400 = 120000|
+| Total                       |     160000        |
+
+
+- Pérdida del  bienestar: 20000
 
 ---
 # Efecto de un impuesto
@@ -306,7 +459,6 @@ ggplot() +
 
 ![](imgs/impuesto.png)
 
-
 ---
 # Análisis económico (2)
 
@@ -317,6 +469,135 @@ ggplot() +
 - Esto se debe a que ahora los productores tienen que recibir $2 más por galón para producir la misma cantidad que antes.
 
 - El nuevo equilibrio (E'), el precio es $3.8 y la cantidad 80 billones de galones. De esos $3.8, los productores reciben $1.8 y pagan $2 de impuestos, pero lograron trasladar la mayor parte de la suba a los consumidores.
+
+
+---
+
+
+# Aplicación a impuestos
+
+El gobierno impone un impuesto de $3.
+```{r}
+library(tidyverse)
+library(patchwork)
+
+df <- tribble(
+  ~x, ~y, ~curva,
+  0,   6,  "demanda",
+  7,   2.5, "demanda",
+  0,   0,   "oferta",
+  6, 6,    "oferta"
+)
+
+
+
+base <- ggplot(df, aes(x, y)) + 
+  geom_line(data = df, aes(color=curva)) + 
+  geom_line(data = df, aes(color=curva)) + 
+  scale_color_brewer(name = "",
+                     palette = "Accent",
+                     labels = c("Demanda", "Oferta")) +
+  scale_x_continuous(expand = c(0, .1),
+                     breaks=seq(0, 8, .5))  +
+  scale_y_continuous(expand = c(0, .1),
+                     breaks=seq(0, 6, .5)) + 
+  geom_segment(aes(x = 0, y = 0, xend = 0, yend = 6.5), arrow = arrow(length=unit(0.2, "cm"))) +
+  geom_segment(aes(x=0, y=0, xend = 7, yend = 0), arrow = arrow(length=unit(0.2, "cm"))) + 
+  theme(axis.title.y = 
+          element_text(angle = 0),
+        axis.title.x = 
+          element_text(hjust=0.95, vjust=6)) + 
+  labs(x="", y="")
+
+
+df_demanda_impuesto <- tribble(
+  ~x, ~y, ~curva,
+  0,  3, "Demanda con impuesto",
+  6, 0, "Demanda con impuesto"
+)
+
+df_oferta_impuesto <- tribble(
+  ~x, ~y, ~curva,
+  0,  3, "Oferta con impuesto",
+  3,  6, "Oferta con impuesto"
+)
+
+impuesto_productores <- base +
+  geom_line(data = df_oferta_impuesto, linetype="dashed") +
+  labs(title="Impuesto sobre los productores")
+  
+impuesto_consumidores <- base +
+  geom_line(data = df_demanda_impuesto, linetype="dashed") +
+  labs(title="Impuesto sobre los consumidores")
+
+
+area <- tribble(
+  ~id, ~x, ~y,
+  "Exc. Cons.", 0, 6,
+  "Exc. Cons.", 0, 5,
+  "Exc. Cons.", 2, 5,
+  "Gob", 0, 5,
+  "Gob", 0, 2,
+  "Gob", 2, 2,
+  "Gob", 2, 5,
+  "Ex. Prod.", 0, 0,
+  "Ex. Prod.", 0, 2,
+  "Ex. Prod.", 2, 2,
+  "Peso Muerto", 2, 2,
+  "Peso Muerto", 2,5,
+  "Peso Muerto", 4, 4
+)
+
+bienestar_con_impuesto <- base +
+  geom_polygon(data=area, aes(x, y, group=id, fill=id), alpha = .6) +
+  scale_fill_brewer(palette = "Accent", name = "")
+
+impuesto_consumidores
+```
+
+---
+# Impuestos
+```{r}
+impuesto_productores
+```
+
+
+---
+# Bienestar antes del impuesto
+
+|       Concepto              |  Valor          |
+|-----------------------------|-----------------|
+| Excedente del Productor     |         8       |
+| Excedente del Consumidor    |         4       |
+| Recaudación                 |         0       | 
+| Total                       |         12      |
+
+---
+# Bienestar
+```{r}
+bienestar_con_impuesto
+```
+
+---
+# Cálculo
+
+|    Concepto               |  Valor        |
+|---------------------------|---------------|
+| Excedente del Productor   |     2         |
+| Excedente del Consumidor  |     1         |
+| Recaudación               |     6         | 
+| Total                     |     9         |
+
+Pérdida: 4
+
+
+---
+
+# Conclusiones
+
+- El equilibrio de mercado es el mismo independientemente de si el impuesto es sobre los consumidores o los productores.
+- La incidencia económica del impuesto no depende de quién lo paga según la ley, sino de las elasticidades de la oferta y la demanda.
+
 
 
 
